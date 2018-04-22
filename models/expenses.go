@@ -2,18 +2,18 @@ package models
 
 import (
 	"database/sql"
-	"time"
 	"fmt"
+	"time"
 )
 
 var db *sql.DB
 
 type expense struct {
-	ID          int
-	Amount      float64
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          int       `json:"id"`
+	Amount      float64   `json:"amount"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (e *expense) Create() error {
@@ -56,8 +56,25 @@ func (e *expense) Get(id int64) error {
 	return nil
 }
 
-func (expense) All() string {
-	return "Ahi va todo"
+func (e expense) All() ([]expense, error) {
+
+	var expenses []expense
+
+	q := `SELECT id, amount, description, created_at, updated_at FROM expenses`
+
+	rows, err := db.Query(q)
+	defer rows.Close()
+	if err != nil {
+		return expenses, err
+	}
+	for rows.Next() {
+		rows.Scan(&e.ID, &e.Amount, &e.Description, &e.CreatedAt, &e.UpdatedAt)
+		expenses = append(expenses, e)
+	}
+	if err = rows.Err(); err != nil {
+		return expenses, err
+	}
+	return expenses, nil
 }
 
 func prepare(q string) (*sql.Stmt, error) {
