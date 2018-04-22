@@ -7,8 +7,12 @@ import (
 	"github.com/codehell/goAPIExpenses/dbo"
 	"log"
 	"github.com/codehell/goAPIExpenses/models"
+	"database/sql"
+	"time"
+	"encoding/json"
 )
 
+var db *sql.DB
 
 type ServeMux struct {
 }
@@ -23,30 +27,34 @@ func (ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch os := path;
 		os {
 	case "/expenses":
+		expense := models.NewExpense(db)
+		if err := expense.Get(34); err != nil {
+			log.Fatal(err)
+		}
+		jsonExpense, err := json.Marshal(expense)
+		if err != nil {
+			log.Println(err)
+		}
 		w.WriteHeader(200)
-		fmt.Fprint(w, `{"ID": "1", "amount": 1000}`)
+		fmt.Fprint(w, string(jsonExpense))
 	}
 
 }
 
 func main() {
 
-	db := dbo.GetConnection()
+	db = dbo.GetConnection()
 	defer db.Close()
-	expense := models.NewExpense(db)
+
+	/*expense := models.NewExpense(db)
 	expense.Amount = 10.20
 	expense.Description = "Cuncher"
 
-
 	if err := expense.Create(); err != nil {
 		log.Fatal(err)
-	}
+	}*/
 
-	if err := expense.Get(1); err != nil {
-		log.Fatal(err)
-	}
-
-	/*s := &http.Server{
+	s := &http.Server{
 		Addr:           ":8080",
 		Handler:        ServeMux{},
 		ReadTimeout:    10 * time.Second,
@@ -54,5 +62,5 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	log.Fatal(s.ListenAndServe())*/
+	log.Fatal(s.ListenAndServe())
 }

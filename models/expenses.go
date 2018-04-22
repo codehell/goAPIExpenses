@@ -1,10 +1,9 @@
 package models
 
 import (
-	"time"
-	"errors"
 	"database/sql"
-	"log"
+	"errors"
+	"time"
 )
 
 var db *sql.DB
@@ -47,7 +46,6 @@ func (e *expense) Get(id int64) error {
 	defer rows.Close()
 	for rows.Next() {
 		rows.Scan(&e.ID, &e.Amount, &e.Description, &e.CreatedAt, &e.UpdatedAt)
-		log.Println(e)
 	}
 	if err = rows.Err(); err != nil {
 		return err
@@ -58,7 +56,6 @@ func (e *expense) Get(id int64) error {
 func (expense) All() string {
 	return "Ahi va todo"
 }
-
 
 func prepare(q string) (*sql.Stmt, error) {
 	stmt, err := db.Prepare(q)
