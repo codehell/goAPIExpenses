@@ -2,8 +2,8 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"time"
+	"fmt"
 )
 
 var db *sql.DB
@@ -16,24 +16,27 @@ type expense struct {
 	UpdatedAt   time.Time
 }
 
-func (e expense) Create() error {
+func (e *expense) Create() error {
 
-	q := `INSERT INTO expenses (amount, description) VALUES ($1, $2)`
-
-	stmt, err := prepare(q)
-	defer stmt.Close()
+	q := `INSERT INTO expenses (amount, description)
+			VALUES ($1, $2) 
+			RETURNING id, amount, description, created_at, updated_at`
+	row, err := db.Query(q, e.Amount, e.Description)
+	defer row.Close()
 	if err != nil {
 		return err
 	}
-	r, err := stmt.Exec(e.Amount, e.Description)
-	if err != nil {
+
+	row.Next()
+	if err = row.Scan(&e.ID, &e.Amount, &e.Description, &e.CreatedAt, &e.UpdatedAt); err != nil {
+		return err
+	}
+	if err = row.Err(); err != nil {
 		return err
 	}
 
-	i, _ := r.RowsAffected()
-	if i != 1 {
-		return errors.New("error: one row expected")
-	}
+	fmt.Println(e)
+
 	return nil
 }
 

@@ -6,9 +6,9 @@ import (
 	"strings"
 	"github.com/codehell/goAPIExpenses/dbo"
 	"log"
-	"github.com/codehell/goAPIExpenses/models"
 	"database/sql"
 	"time"
+	"github.com/codehell/goAPIExpenses/models"
 	"encoding/json"
 )
 
@@ -20,23 +20,43 @@ type ServeMux struct {
 func (ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	url := r.URL
 	path := url.Path
+	method := r.Method
 
 	parts := strings.Split(path, "/")
 	fmt.Println(parts[0:], url.Path)
 	w.Header().Set("Content-Type", "application/json")
+
 	switch os := path;
 		os {
 	case "/expenses":
 		expense := models.NewExpense(db)
-		if err := expense.Get(34); err != nil {
-			log.Fatal(err)
+		if method == "GET" {
+			if err := expense.Get(34); err != nil {
+				log.Fatal(err)
+			}
+			jsonExpense, err := json.Marshal(expense)
+			if err != nil {
+				log.Fatal(err)
+			}
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, string(jsonExpense))
+		} else if method == "POST" {
+			decoder := json.NewDecoder(r.Body)
+			defer r.Body.Close()
+			if err := decoder.Decode(&expense); err != nil {
+				log.Fatal(err)
+			}
+			if err := expense.Create(); err != nil {
+				log.Fatal(err)
+			}
+			jsonExpense, err := json.Marshal(expense)
+			if err != nil {
+				log.Fatal(err)
+			}
+			w.WriteHeader(http.StatusCreated)
+			w.Write(jsonExpense)
 		}
-		jsonExpense, err := json.Marshal(expense)
-		if err != nil {
-			log.Println(err)
-		}
-		w.WriteHeader(200)
-		fmt.Fprint(w, string(jsonExpense))
+
 	}
 
 }
